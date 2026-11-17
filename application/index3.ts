@@ -44,9 +44,17 @@ const totalScoreEl = getEl('total-score');
 const totalDiscountEl = getEl('total-discount');
 const totalAmountEl = getEl('total-amount');
 
+const card = document.createElement('div');
+const label = document.createElement('span');
+const body = document.createElement('div');
+const nameEl = document.createElement('div');
+const price = document.createElement('div');
+const button = document.createElement('button');
+const priceEl = document.createElement('card-price')
+
 const formatYen = (value: number): string => `¥${value.toLocaleString()}`;
-const findItem = (id: number): Merchandise | undefined =>
-  merchandiseData.find((m) => m.id === id);
+const findItem = (id: number): Merchandise[] =>
+  merchandiseData.filter((m) => m.id === id);
 const findCartItem = (id: number): CartItem | undefined =>
   inCart.find((c) => c.id === id);
 
@@ -59,35 +67,38 @@ function createCard(
   const card = document.createElement('div');
   card.classList.add('card');
 
-  // セール中（左上）
   if (item.discount) {
-    const label = document.createElement('span');
-    label.classList.add('sale-badge');
-    label.textContent = `セール中:${item.discount}% OFF`;
-    card.appendChild(label);
+    card.appendChild(createSaleBadge(item.discount));
   }
 
-  const body = document.createElement('div');
+  card.append(createCardBody(item), createCardButton(buttonLabel, onClick));
+  return card;
+}
+
+function createSaleBadge(discount: number): HTMLSpanElement {
+  label.classList.add('sale-badge');
+  label.textContent = `セール中:${discount}% OFF`;
+  return label;
+}
+
+
+function createCardBody(item: Merchandise): HTMLDivElement {
   body.classList.add('card-body');
+  nameEl.classList.add('card-nameEl');
+  nameEl.textContent = item.name;
+  priceEl.classList.add('card-price');
+  priceEl.textContent = formatYen(item.price);
 
-  const name = document.createElement('div');
-  name.classList.add('card-name');
-  name.textContent = item.name;
+  body.append(nameEl, priceEl);
+  return body;
+}
 
-  const price = document.createElement('div');
-  price.classList.add('card-price');
-  price.textContent = formatYen(item.price);
-
-  body.append(name, price);
-
-  const button = document.createElement('button');
+function createCardButton(label: string, onClick: () => void): HTMLButtonElement {
   button.type = 'button';
   button.classList.add('card-btn');
-  button.textContent = buttonLabel;
+  button.textContent = label;
   button.addEventListener('click', onClick);
-
-  card.append(body, button);
-  return card;
+  return button;
 }
 
 // 商品リスト表示（全商品を常に表示）
@@ -204,8 +215,4 @@ function changeQuantity(id: number, newQuantity: number): void {
 }
 
 // 初期化
-function initShopping(): void {
-  render();
-}
-
-initShopping();
+render();
