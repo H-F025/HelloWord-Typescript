@@ -59,48 +59,48 @@ const findCartItem = (id: number): CartItem | undefined =>
   inCart.find((c) => c.id === id);
 
 // 商品カード（商品リスト・カート共通）を作る
+// クラスとテキストをまとめて設定する
+function setClassAndText(el: HTMLElement, className: string, text?: string): void {
+  el.classList.add(className);
+  if (text !== undefined) el.textContent = text;
+}
+
 function createCard(
   item: Merchandise,
   buttonLabel: string,
   onClick: () => void
 ): HTMLDivElement {
   const card = document.createElement('div');
-  card.classList.add('card');
+  setClassAndText(card, 'card');
 
+  // セール中（左上）
   if (item.discount) {
-    card.appendChild(createSaleBadge(item.discount));
+    const badge = document.createElement('span');
+    setClassAndText(badge, 'sale-badge', `セール中:${item.discount}% OFF`);
+    card.appendChild(badge);
   }
 
-  card.append(createCardBody(item), createCardButton(buttonLabel, onClick));
+  const body = document.createElement('div');
+  setClassAndText(body, 'card-body');
+
+  const name = document.createElement('div');
+  setClassAndText(name, 'card-name', item.name);
+
+  const price = document.createElement('div');
+  setClassAndText(price, 'card-price', formatYen(item.price));
+
+  body.append(name, price);
+
+  const button = document.createElement('button');
+  setClassAndText(button, 'card-btn', buttonLabel);
+  button.type = 'button';
+  button.addEventListener('click', onClick);
+
+  card.append(body, button);
   return card;
 }
 
-function createSaleBadge(discount: number): HTMLSpanElement {
-  label.classList.add('sale-badge');
-  label.textContent = `セール中:${discount}% OFF`;
-  return label;
-}
-
-
-function createCardBody(item: Merchandise): HTMLDivElement {
-  body.classList.add('card-body');
-  nameEl.classList.add('card-nameEl');
-  nameEl.textContent = item.name;
-  priceEl.classList.add('card-price');
-  priceEl.textContent = formatYen(item.price);
-
-  body.append(nameEl, priceEl);
-  return body;
-}
-
-function createCardButton(label: string, onClick: () => void): HTMLButtonElement {
-  button.type = 'button';
-  button.classList.add('card-btn');
-  button.textContent = label;
-  button.addEventListener('click', onClick);
-  return button;
-}
-
+// 商品リスト表示（全商品を常に表示）
 // 商品リスト表示（全商品を常に表示）
 function renderShopping(): void {
   shoppingEl.innerHTML = '';
@@ -115,14 +115,14 @@ function renderShopping(): void {
 function renderCart(): void {
   cartEl.innerHTML = '';
 
-  inCart.forEach((cartItem) => {
+    inCart.forEach((cartItem) => {
     const item = findItem(cartItem.id);
     if (!item) return; // 見つからない商品はスキップ
 
     const li = document.createElement('li');
 
-    const card = createCard(item, 'カートから削除', () =>
-      changeQuantity(item.id, cartItem.quantity + DELETE)
+    const card = createCard(item[0], 'カートから削除', () =>
+      changeQuantity(item[0].id, cartItem.quantity + DELETE)
     );
 
     // 数量SelectBox（右上 x1, x2 ...）
@@ -138,7 +138,7 @@ function renderCart(): void {
       select.appendChild(option);
     }
     select.addEventListener('change', () => {
-      changeQuantity(item.id, Number(select.value));
+      changeQuantity(item[0].id, Number(select.value));
     });
 
     card.appendChild(select);
@@ -161,13 +161,13 @@ function renderBreakdown(): void {
   // 定価合計
   const subtotal = inCart.reduce((sum, c) => {
     const item = findItem(c.id);
-    return item ? sum + item.price * c.quantity : sum;
+    return item ? sum + item[0].price * c.quantity : sum;
   }, 0);
 
   // 割引後の合計
   const total = inCart.reduce((sum, c) => {
     const item = findItem(c.id);
-    return item ? sum + discountedPrice(item) * c.quantity : sum;
+    return item ? sum + discountedPrice(item[0]) * c.quantity : sum;
   }, 0);
 
   // 全体の割引率
